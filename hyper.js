@@ -8,6 +8,7 @@ import {e} from "../../../dist/assets/vendor-693449a0";
             return 'uid-' + (++i);
         };
     }(0);
+    
     function hasEvent(callback){
         return typeof callback === 'function';
     }
