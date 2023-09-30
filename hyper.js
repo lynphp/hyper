@@ -20,14 +20,11 @@
     function handleSelect(elem){
 
     }
-    function handleSelect(elem){
-
-    }
     function onclick(event){
         if(!event.target.hasAttribute('with')){
             alert('HER001: Attribute "with" was not set for ' + event.target.nodeName.toLowerCase()+"#"+event.target.id);
         }
-        executeWith(event.target);
+        executeWith(event.target).then(r => '');
     }
     async function executeWith(element){
         let response='';
@@ -39,7 +36,7 @@
         }
 
         if(element.hasAttribute('replace')){
-            if(element.getAttribute('replace')!='self'){
+            if(element.getAttribute('replace')!=='self'){
                 let elem = document.querySelector(element.getAttribute('replace'))
                 elem.replaceWith(response);
             }else{
@@ -47,6 +44,11 @@
             }
         }else if(element.hasAttribute('fill')){
             let elem = document.querySelector(element.getAttribute('fill'))
+            if(elem===null) {
+                let elemSelect = element.getAttribute('fill')
+                console.error("HER002:  %s was not found!",elemSelect)
+                return;
+            }
             elem.innerHTML=response;
         }else{
             element.innerHTML=response;
