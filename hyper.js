@@ -1,5 +1,3 @@
-import {e} from "../../../dist/assets/vendor-693449a0";
-
 (()=>{
     const hyperAttrs=['with','replace','fill','lazy','every','as', 'on'];
     const elemBehave=[]
