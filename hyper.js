@@ -1,6 +1,7 @@
 
 let pages=[];
 const hyper = ()=>{
+    let pending=[];
     const hyperAttrs=['fetch','replace','fill','lazy','every','as', 'on'];
     const elemBehave=[]
     var uid = function (i) {
@@ -39,6 +40,9 @@ const hyper = ()=>{
         return await get(element);
     }
     async function executeWith(element){
+        if(element.hasAttribute('on')){
+            element.removeEventListener(element.hasAttribute('on'));
+        }
         populate(await fetchContent(element),element);
         hyper();
     }
@@ -63,7 +67,6 @@ const hyper = ()=>{
         if(element.hasAttribute('static') && pages[url]!==undefined){
             return pages[url];
         }
-        console.log(url + "?" +getDataAttribute(element))
         async function getAndWait() {
             const getRequest = new Request(url + "?" +getDataAttribute(element), {
                 method: "GET",
@@ -133,22 +136,20 @@ const hyper = ()=>{
         })
     }
     async function handleA(element) {
-        console.log('handleA pages',pages)
-        element.addEventListener('click',async(e)=>{
+        element.addEventListener('click', async (e) => {
             e.preventDefault();
             let content = await fetchContent(element);
-            if (window.history.replaceState && element.hasAttribute('fill') && element.getAttribute('fill')==='page') {
+            if (window.history.replaceState && element.hasAttribute('fill') && element.getAttribute('fill') === 'page') {
                 replacePage(content)
                 //prevents browser from storing history with each change:
                 window.history.replaceState(null, document.title, element.href);
-            }else{
-                populate(content,element)
+            } else {
+                populate(content, element)
                 hyper();
             }
         })
     }
     function populate(content, element){
-
         if(element.hasAttribute('replace')){
             if(element.getAttribute('replace')!=='self'){
                 let elem = document.querySelector(element.getAttribute('replace'))
@@ -180,9 +181,8 @@ const hyper = ()=>{
         element.parentElement.removeChild(element);
         head.appendChild(script);
     }
-    function replacePage(NC) {
-        console.log('replacePage');
-        let doc = new DOMParser().parseFromString(NC, 'text/html')
+    function replacePage(content) {
+        let doc = new DOMParser().parseFromString(content, 'text/html')
         document.querySelector("body").innerHTML=doc.body.innerHTML
         document.querySelector("title").innerText=doc.title
         const scripts = document.getElementsByTagName('script');
@@ -195,6 +195,20 @@ const hyper = ()=>{
             null,
             XPathResult.ANY_TYPE,
             null)
+    }
+    function removePending(element) {
+
+        pending = pending.filter(function (elem) {
+            return elem !== element;
+        });
+
+    }
+    function debounce(func, timeout = 300){
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { func.apply(this, args); }, timeout);
+        };
     }
     function handle(element){
         let type = element.nodeName.toLowerCase();
@@ -211,12 +225,30 @@ const hyper = ()=>{
                             break;
                         case 'load':
                             window.addEventListener('load',()=>executeWith(element))
+                            break;
+                        case 'mouseover':
+                            window.addEventListener('mouseover',()=>executeWith(element))
+                            break;
                     }
                 })
 
             }else if(element.hasAttribute('listen')){
                 let elem = document.querySelector(element.getAttribute('listen').toLowerCase().split(':')[0]);
                 elem.onchange=()=>executeWith(element)
+            }
+            if(element.hasAttribute('prepare')) {
+                element.addEventListener(element.getAttribute('prepare'), debounce(async () => {
+                    if(pending[element]===undefined) {
+                        pending[element]=true;
+                        pages[getURL(element)] = await fetchContent(element);
+                        let dom = new DOMParser().parseFromString(pages[getURL(element)], 'text/html')
+                        let elements = dom.querySelectorAll('*[hyper]')
+                        elements.forEach((element)=> {
+                            handle(element);
+                        });
+                        removePending(element);
+                    }
+                }));
             }
         });
         switch (type){
