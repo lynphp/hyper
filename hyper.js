@@ -2,40 +2,54 @@ const hyper =((directive='hyper')=>{
     const selector = '*['+directive +']'
     const pending=[]
     const pages=[]
+    const _fetch='fetch'
+    const _id = 'id'
+    const _listen = 'listen'
+    const _trigger = 'trigger'
+    const _prepare = 'prepare'
+    const _static = 'static'
+    const _replace = 'replace'
+    const _fill = 'fill'
+    const _self = 'self'
+    const _uid = 'self'
+    const _href = 'href'
+    const _action = 'action'
+    const _bind = 'bind'
+    const _method = 'method'
     var uid = function(i) {
         return function () {
-            return 'uid' + (++i)
+            return _uid + (++i)
         };
     }(0);
 
     function setHID(element){
         let hid = ''
-        if (!element.hasAttribute('id')) {
+        if (!element.hasAttribute(_id)) {
             hid = uid();
-            element.setAttribute('id',hid)
+            element.setAttribute(_id,hid)
         }
         return hid;
     }
 
     function getURL(element){
         let params= getDataAttribute(element)
-        if(element.hasAttribute('fetch')){
-            return element.getAttribute('fetch').split(":")[1]+'?'+params
+        if(element.hasAttribute(_fetch)){
+            return element.getAttribute(_fetch).split(":")[1]+'?'+params
         }else if(element.nodeName === 'A'){
-            if(element.getAttribute('href').startsWith('javascript')){
-                eval(element.getAttribute('href'))
+            if(element.getAttribute(_href).startsWith('javascript')){
+                eval(element.getAttribute(_href))
                 return  undefined
             }
-            return element.getAttribute('href')+'?'+params;
-        }else if(element.nodeName==='FORM' && element.hasAttribute('action')){
-            return element.getAttribute('action')
+            return element.getAttribute(_href)+'?'+params;
+        }else if(element.nodeName==='FORM' && element.hasAttribute(_action)){
+            return element.getAttribute(_action)
         }
     }
 
     function getDataAttribute(element){
         const queryParams = {}
         Object.getOwnPropertyNames(element.dataset).forEach((prop)=>{
-            if(element.dataset[prop].startsWith("bind")){
+            if(element.dataset[prop].startsWith(_bind)){
                 queryParams[prop] = document.querySelector(element.dataset[prop].split(':')[1])?.value
             }else{
                 queryParams[prop] = element.dataset[prop]
@@ -48,13 +62,13 @@ const hyper =((directive='hyper')=>{
         let url = getURL(element)
         if(url !== undefined) {
 
-            if (element.hasAttribute('static') && pages[url] !== undefined) {
+            if (element.hasAttribute(_static) && pages[url] !== undefined) {
                 return pages[url];
             }
             function getAndWait(url) {
                 const getRequest= new Request(url, {
                     method: "GET",
-                    mode: "cors",
+                    mode: "no-cors",
                     headers: {'Accept': 'text/html'}
                 });
                 return fetch(getRequest).then(function (response) {
@@ -67,7 +81,7 @@ const hyper =((directive='hyper')=>{
             }
 
             let response = getAndWait(url)
-            if (element.hasAttribute('static') && pages[url] === undefined) {
+            if (element.hasAttribute(_static) && pages[url] === undefined) {
                 pages[url] = response;
             }
 
@@ -80,7 +94,7 @@ const hyper =((directive='hyper')=>{
     function post(element){
         let url = getURL(element)
         if(url !== undefined) {
-            if (element.hasAttribute('static') && pages[url] !== undefined) {
+            if (element.hasAttribute(_static) && pages[url] !== undefined) {
                 return pages[url]
             }
             function postAndWait(data) {
@@ -96,7 +110,7 @@ const hyper =((directive='hyper')=>{
                 });
             }
             let response= postAndWait()
-            if (element.hasAttribute('static') && pages[url] === undefined) {
+            if (element.hasAttribute(_static) && pages[url] === undefined) {
                 pages[url] = response;
             }
             return response;
@@ -108,7 +122,7 @@ const hyper =((directive='hyper')=>{
     function getDataAttribute(element){
         const queryParams = {}
         Object.getOwnPropertyNames(element.dataset).forEach((prop)=>{
-            if(element.dataset[prop].startsWith("bind")){
+            if(element.dataset[prop].startsWith(_bind)){
                 queryParams[prop] = document.querySelector(element.dataset[prop].split(':')[1])?.value
             }else{
                 queryParams[prop] = element.dataset[prop]
@@ -124,12 +138,12 @@ const hyper =((directive='hyper')=>{
     }
 
     function replace(content, element){
-        if(element.getAttribute('replace') !== 'self'){
+        if(element.getAttribute(_replace) !== _self){
             element.replaceWith(content);
         }else{
-            document.querySelector(element.getAttribute('replace')).replace(content);
+            document.querySelector(element.getAttribute(_replace)).replace(content);
             initElementIDs();
-            handle(document.querySelector(element.getAttribute('replace')))
+            handle(document.querySelector(element.getAttribute(_replace)))
         }
     }
 
@@ -148,10 +162,10 @@ const hyper =((directive='hyper')=>{
 
     function fill(content, element){
 
-        if (element.getAttribute('fill') !== 'self') {
-            document.querySelector(element.getAttribute('fill')).innerHTML = content;
+        if (element.getAttribute(_fill) !== _self) {
+            document.querySelector(element.getAttribute(_fill)).innerHTML = content;
             initElementIDs();
-            handleChunk(document.querySelector(element.getAttribute('fill')).innerHTML);
+            handleChunk(document.querySelector(element.getAttribute(_fill)).innerHTML);
         } else {
             element.innerHTML = content
             initElementIDs();
@@ -160,13 +174,17 @@ const hyper =((directive='hyper')=>{
     }
 
     function populate(content, element){
+        if(element.hasAttribute('extract')){
+            let dom= new DOMParser().parseFromString(content, 'text/html')
+            content = dom.querySelector(element.getAttribute('extract')).innerHTML
+        }
         if(element.nodeName === 'A') {
-            if(element.hasAttribute('fill')){
+            if(element.hasAttribute(_fill)){
                 fill(content, element)
             }
-        }else if(element.hasAttribute('replace')){
+        }else if(element.hasAttribute(_replace)){
             replace(content, element)
-        }else if(element.hasAttribute('fill')) {
+        }else if(element.hasAttribute(_fill)) {
             fill(content, element)
         }else {
             element.innerHTML = content
@@ -181,15 +199,11 @@ const hyper =((directive='hyper')=>{
         populate(response, element)
     }
 
-    function getHID(element){
-        return element.getAttribute('hid')
-    }
-
     async function fetchContent(element){
-        if(element.getAttribute('fetch')?.startsWith('GET')){
+        if(element.getAttribute(_fetch)?.startsWith('GET')){
             return get(element)
         }
-        if(element.getAttribute('fetch')?.startsWith('POST')){
+        if(element.getAttribute(_fetch)?.startsWith('POST')){
             return  post(element)
         }
         return get(element)
@@ -207,12 +221,12 @@ const hyper =((directive='hyper')=>{
         let url = getURL(element)
         let data= {}
         if(url !== undefined) {
-            if (element.hasAttribute('static') && pages[url] !== undefined) {
+            if (element.hasAttribute(_static) && pages[url] !== undefined) {
                 return pages[url]
             }
             async function postAndWait(data) {
                 const getRequest= new Request(url, {
-                    method: element.getAttribute('method'),
+                    method: element.getAttribute(_method),
                     mode: "cors",
                     headers: {'Accept': 'text/html'},
                     body: data,
@@ -226,12 +240,12 @@ const hyper =((directive='hyper')=>{
             if(element.nodeName==='FORM'){
                 data = new FormData(element)
             }
-            let response= await postAndWait()
-            if (element.hasAttribute('static') && pages[url] === undefined) {
+            let response= await postAndWait(data)
+            if (element.hasAttribute(_static) && pages[url] === undefined) {
                 pages[url] = response
             }
             populate(response,element)
-        }else{
+        } else {
             return ''
         }
     }
@@ -242,23 +256,30 @@ const hyper =((directive='hyper')=>{
         }
         setHID(element)
 
-        if (element.hasAttribute('listen')) {
-            let listenParts= element.getAttribute('listen').toLowerCase().split(':')
+        if (element.hasAttribute(_listen)) {
+            let listenParts= element.getAttribute(_listen).toLowerCase().split(':')
             let elem = document.querySelector(listenParts[0])
             elem.addEventListener(listenParts[1], ()=>{
                  executeFetch(element)
             })
-        } else if (element.hasAttribute('trigger')) {
-            let on= element.getAttribute('trigger').toLowerCase().split(',')
+        } else if (element.hasAttribute(_trigger)) {
+            let on= element.getAttribute(_trigger).toLowerCase().split('|')
             on.forEach((event) => {
                 if ( event === 'load') {
                      executeFetch(element)
-                } else if ('on' + event in element) {
-                    element.addEventListener(event,async (e)=>{await executeFetch(element)})
+                } else{
+                    if ('on' + event in element) {
+                        element.addEventListener(event,async (e)=>{await executeFetch(element)})
+                    }else{
+                        console.log(event.split(':')[0])
+                        document.querySelector(event.split(':')[0]).addEventListener(event.split(':')[1],()=>{
+                            executeFetch(element)
+                        })
+                    }
                 }
             })
-        } else if (element.hasAttribute('prepare')) {
-            element.addEventListener(element.getAttribute('prepare'), debounce(async () => {
+        } else if (element.hasAttribute(_prepare)) {
+            element.addEventListener(element.getAttribute(_prepare), async () => {
                 if(pending[element] === undefined) {
                     pending[element] = true
                     pages[getURL(element)] = await fetchContent(element)
@@ -269,8 +290,8 @@ const hyper =((directive='hyper')=>{
                     })
                     removePending(element)
                 }
-            }));
-        } else if (element.hasAttribute('static')) {
+            });
+        } else if (element.hasAttribute(_static)) {
             executeFetch(element)
         } else if (element.hasAttribute('action')) {
             element.addEventListener('submit',(event)=>{
