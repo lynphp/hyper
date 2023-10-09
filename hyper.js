@@ -1,7 +1,10 @@
+
+let _pages=[];
+console.log('loaded')
 const hyper =((directive='hyper')=>{
     const selector = '*['+directive +']'
     const pending=[]
-    const pages=[]
+    const pages=_pages
     const _fetch='fetch'
     const _id = 'id'
     const _listen = 'listen'
@@ -36,9 +39,11 @@ const hyper =((directive='hyper')=>{
         if(element.hasAttribute(_fetch)){
             return element.getAttribute(_fetch).split(":")[1]+'?'+params
         }else if(element.nodeName === 'A'){
-            if(element.getAttribute(_href).startsWith('javascript')){
+            if(element.hasAttribute(_href) && element.getAttribute(_href).startsWith('javascript')){
                 eval(element.getAttribute(_href))
                 return  undefined
+            }if(element.hasAttribute('_href') && element.getAttribute('_href')){
+                return element.getAttribute('_href')+'?'+params;
             }
             return element.getAttribute(_href)+'?'+params;
         }else if(element.nodeName==='FORM' && element.hasAttribute(_action)){
@@ -249,7 +254,34 @@ const hyper =((directive='hyper')=>{
             return ''
         }
     }
+    function prepare(element){
+        get(element);
 
+    }
+
+    function loadJs(element) {
+        let src= element.src;
+        let head= document.getElementsByTagName('head')[0];
+        let script= document.createElement('script');
+        script.src= src;
+        script.setAttribute('crossOrigin', 'crossOrigin')
+        script.setAttribute('type', 'module')
+        element.parentElement.removeChild(element);
+        head.appendChild(script);
+    }
+    function replacePage(content) {
+        let doc = new DOMParser().parseFromString(content, 'text/html')
+        document.querySelector("body").innerHTML=doc.body.innerHTML
+        document.querySelector("title").innerText=doc.title
+        _pages=pages
+        hyper();
+        document.evaluate("html//head//script",
+            document,
+            null,
+            XPathResult.ANY_TYPE,
+            null
+        )
+    }
     async function handle(element){
         if(!element.hasAttribute(directive)){
             return;
@@ -279,18 +311,21 @@ const hyper =((directive='hyper')=>{
                 }
             })
         } else if (element.hasAttribute(_prepare)) {
-            element.addEventListener(element.getAttribute(_prepare), async () => {
-                if(pending[element] === undefined) {
-                    pending[element] = true
-                    pages[getURL(element)] = await fetchContent(element)
-                    let dom= new DOMParser().parseFromString(pages[getURL(element)], 'text/html')
-                    let elements= dom.querySelectorAll('*[hyper]')
-                    elements.forEach((element)=> {
-                        handle(element)
-                    })
-                    removePending(element)
+            if(pages[getURL(element)]===undefined) {
+                pages[getURL(element)] = await fetchContent(element)
+            }
+            element.style.cursor='pointer'
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (window.history.replaceState) {
+                    replacePage(pages[getURL(element)])
+                    //prevents browser from storing history with each change:
+                    window.history.replaceState(null, document.title, getURL(element));
                 }
-            });
+            })
+            let url = element.getAttribute('href');
+            element.removeAttribute('href')
+            element.setAttribute('_href',url);
         } else if (element.hasAttribute(_static)) {
             executeFetch(element)
         } else if (element.hasAttribute('action')) {
