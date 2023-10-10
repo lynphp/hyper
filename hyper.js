@@ -5,31 +5,36 @@
 * Copywrite 2023
 */
 let _pages=[];
-console.log('loaded')
-const hyper =((directive='hyper')=>{
-    const selector = '*['+directive +']'
-    const pending=[]
-    const pages=_pages
-    const _fetch='fetch'
-    const _id = 'id'
-    const _listen = 'listen'
-    const _trigger = 'trigger'
-    const _prepare = 'prepare'
-    const _static = 'static'
-    const _replace = 'replace'
-    const _fill = 'fill'
-    const _self = 'self'
-    const _uid = 'self'
-    const _href = 'href'
-    const _action = 'action'
-    const _bind = 'bind'
-    const _method = 'method'
+window.hyper = ((directive='hyper')=>{
+    let selector = '*['+directive +']'
+    let pending=[];
+    let pages=_pages
+    let _fetch='fetch'
+    let _id = 'id'
+    let _listen = 'listen'
+    let _trigger = 'trigger'
+    let _every ='every'
+    let _prepare = 'prepare'
+    let _static = 'static'
+    let _replace = 'replace'
+    let _fill = 'fill'
+    let _self = 'self'
+    let _uid = 'self'
+    let _href = 'href'
+    let _action = 'action'
+    let _bind = 'bind'
+    let _method = 'method'
+    let _header = 'x-request'
+    let _spread = 'spread'
+    let _extract = 'extract'
+    let _contentType = 'text/html'
+    let _disableBack = 'disable-back'
+    let _htmln = 'htmln'
     var uid = function(i) {
         return function () {
             return _uid + (++i)
         };
     }(0);
-
     function setHID(element){
         let hid = ''
         if (!element.hasAttribute(_id)) {
@@ -38,7 +43,6 @@ const hyper =((directive='hyper')=>{
         }
         return hid;
     }
-
     function getURL(element){
         let params= getDataAttribute(element)
         if(element.hasAttribute(_fetch)){
@@ -55,19 +59,17 @@ const hyper =((directive='hyper')=>{
             return element.getAttribute(_action)
         }
     }
-
     function getDataAttribute(element){
         const queryParams = {}
         Object.getOwnPropertyNames(element.dataset).forEach((prop)=>{
             if(element.dataset[prop].startsWith(_bind)){
                 queryParams[prop] = document.querySelector(element.dataset[prop].split(':')[1])?.value
-            }else{
+            } else {
                 queryParams[prop] = element.dataset[prop]
             }
         });
         return (new URLSearchParams(queryParams)).toString()
     }
-
     function get(element) {
         let url = getURL(element)
         if(url !== undefined) {
@@ -79,7 +81,7 @@ const hyper =((directive='hyper')=>{
                 const getRequest= new Request(url, {
                     method: "GET",
                     mode: "no-cors",
-                    headers: {'Accept': 'text/html'}
+                    headers: {'Accept': _contentType, 'Hyper':'true'}
                 });
                 return fetch(getRequest).then(function (response) {
                     let html= response.text();
@@ -89,18 +91,15 @@ const hyper =((directive='hyper')=>{
                     return ''
                 });
             }
-
             let response = getAndWait(url)
             if (element.hasAttribute(_static) && pages[url] === undefined) {
                 pages[url] = response;
             }
-
             return response;
         } else {
             return '';
         }
     }
-
     function post(element){
         let url = getURL(element)
         if(url !== undefined) {
@@ -111,7 +110,7 @@ const hyper =((directive='hyper')=>{
                 const getRequest= new Request(url, {
                     method: "POST",
                     mode: "cors",
-                    headers: {'Accept': 'text/html'},
+                    headers: {'Accept': _contentType, _header:directive},
                 });
                 return fetch(getRequest).then(function (response) {
                     return response.text();
@@ -128,7 +127,6 @@ const hyper =((directive='hyper')=>{
             return '';
         }
     }
-
     function getDataAttribute(element){
         const queryParams = {}
         Object.getOwnPropertyNames(element.dataset).forEach((prop)=>{
@@ -140,13 +138,11 @@ const hyper =((directive='hyper')=>{
         });
         return (new URLSearchParams(queryParams)).toString();
     }
-
-    function removePending(element) {
-        pending = pending.filter(function (elem) {
-            return elem !== element;
-        });
-    }
-
+    /**
+     * Replace the who element with response from server
+     * @param content
+     * @param element
+     */
     function replace(content, element){
         if(element.getAttribute(_replace) !== _self){
             element.replaceWith(content);
@@ -156,37 +152,69 @@ const hyper =((directive='hyper')=>{
             handle(document.querySelector(element.getAttribute(_replace)))
         }
     }
-
     function initElementIDs(){
         document.querySelectorAll(selector).forEach((elem)=>{
             setHID(elem)
         })
     }
-
     function handleChunk(html){
-        let doc = new DOMParser().parseFromString(html,'text/html')
+        let doc = new DOMParser().parseFromString(html,_contentType)
         doc.querySelectorAll('*[id]').forEach(async(elem)=>{
             await handle(document.getElementById(elem.id))
         })
     }
-
+    /**
+     * insert response into element's innerHTML
+     * @param content
+     * @param element
+     */
     function fill(content, element){
-
         if (element.getAttribute(_fill) !== _self) {
-            document.querySelector(element.getAttribute(_fill)).innerHTML = content;
-            initElementIDs();
-            handleChunk(document.querySelector(element.getAttribute(_fill)).innerHTML);
+            if(document.querySelector(element.getAttribute(_fill))) {
+                document.querySelector(element.getAttribute(_fill)).innerHTML = content;
+                initElementIDs();
+                handleChunk(document.querySelector(element.getAttribute(_fill)).innerHTML);
+            }
         } else {
             element.innerHTML = content
             initElementIDs();
             handleChunk(element.innerHTML);
         }
     }
-
+    /**
+     * replac="#target-element"
+     * fill="#target-element"
+     * extract="#content-element" requires fill or replace attribute
+     * spread="#content-element-id1:fill=#target-element1|#content-element-id2:replace=#target-element2|n..."
+     * @param content HTMLElement
+     * @param element String
+     */
     function populate(content, element){
-        if(element.hasAttribute('extract')){
-            let dom= new DOMParser().parseFromString(content, 'text/html')
-            content = dom.querySelector(element.getAttribute('extract')).innerHTML
+        if(element.hasAttribute(_extract)){
+            let dom= new DOMParser().parseFromString(content, _contentType)
+            content = dom.querySelector(element.getAttribute(_extract)).innerHTML
+        } else if (element.hasAttribute(_spread)){
+            //spread="#content-element-id:fill=#target-element|n..."
+            let dom= new DOMParser().parseFromString(content, _contentType)
+            let targets = element.getAttribute(_spread).split('|')
+            targets.forEach((target)=>{
+                let resContent = dom.querySelector(target.split(':')[0]).innerHTML
+                let operTarget = target.split(':')[1].split('=')
+                let tmpElem = document.createElement('div')
+                tmpElem.setAttribute(operTarget[0],operTarget[1])
+                populate(resContent, tmpElem)
+            })
+            return
+        } else if (element.hasAttribute(_htmln)) {
+            let dom= new DOMParser().parseFromString(content, _contentType)
+            dom.querySelector('*[id]').forEach((elm)=>{
+                let elem = document.getElementById(elm.id)
+                if(isHTML(elem.innerHTML)) {
+                    elem.innerHTML = elem.innerHTML
+                }else{
+                    elem.innerText = elem.innerText
+                }
+            })
         }
         if(element.nodeName === 'A') {
             if(element.hasAttribute(_fill)){
@@ -201,7 +229,6 @@ const hyper =((directive='hyper')=>{
             initElementIDs()
             handleChunk(element.innerHTML);
         }
-
     }
 
     async function executeFetch(element){
@@ -209,11 +236,23 @@ const hyper =((directive='hyper')=>{
         populate(response, element)
     }
 
+    function isHTML(content){
+        let elem = document.createElement('div');
+        elem.innerHTML = content;
+        return elem.children.length > 0;
+    }
+
     async function fetchContent(element){
         if(element.getAttribute(_fetch)?.startsWith('GET')){
             return get(element)
         }
         if(element.getAttribute(_fetch)?.startsWith('POST')){
+            return  post(element)
+        }
+        if(element.getAttribute(_fetch)?.startsWith('DELETE')){
+            return  post(element)
+        }
+        if(element.getAttribute(_fetch)?.startsWith('PUT')){
             return  post(element)
         }
         return get(element)
@@ -238,7 +277,7 @@ const hyper =((directive='hyper')=>{
                 const getRequest= new Request(url, {
                     method: element.getAttribute(_method),
                     mode: "cors",
-                    headers: {'Accept': 'text/html'},
+                    headers: {'Accept': _contentType, _header:directive},
                     body: data,
                 });
                 return fetch(getRequest).then(function  (response) {
@@ -259,6 +298,7 @@ const hyper =((directive='hyper')=>{
             return ''
         }
     }
+
     function prepare(element){
         get(element);
 
@@ -274,12 +314,13 @@ const hyper =((directive='hyper')=>{
         element.parentElement.removeChild(element);
         head.appendChild(script);
     }
+
     function replacePage(content) {
         let doc = new DOMParser().parseFromString(content, 'text/html')
         document.querySelector("body").innerHTML=doc.body.innerHTML
         document.querySelector("title").innerText=doc.title
         _pages=pages
-        hyper();
+        window.hyper();
         document.evaluate("html//head//script",
             document,
             null,
@@ -287,12 +328,12 @@ const hyper =((directive='hyper')=>{
             null
         )
     }
+
     async function handle(element){
         if(!element.hasAttribute(directive)){
             return;
         }
         setHID(element)
-
         if (element.hasAttribute(_listen)) {
             let listenParts= element.getAttribute(_listen).toLowerCase().split(':')
             let elem = document.querySelector(listenParts[0])
@@ -301,15 +342,18 @@ const hyper =((directive='hyper')=>{
             })
         } else if (element.hasAttribute(_trigger)) {
             let on= element.getAttribute(_trigger).toLowerCase().split('|')
-            on.forEach((event) => {
+            on.forEach( (event) => {
                 if ( event === 'load') {
                      executeFetch(element)
-                } else{
-                    if ('on' + event in element) {
-                        element.addEventListener(event,async (e)=>{await executeFetch(element)})
-                    }else{
-                        console.log(event.split(':')[0])
-                        document.querySelector(event.split(':')[0]).addEventListener(event.split(':')[1],()=>{
+                } else if ('on' + event in element) {
+                    element.addEventListener(event,async (e)=>{await executeFetch(element)})
+                }
+                if (event.startsWith(_every)) {
+                   setInterval(async ()=>{await executeFetch(element)}, parseInt(event.split(':')[1]))
+                } else {
+                    //listeners
+                    if(event.lastIndexOf(':')>0) {
+                        document.querySelector(event.split(':')[0]).addEventListener(event.split(':')[1], () => {
                             executeFetch(element)
                         })
                     }
@@ -328,16 +372,22 @@ const hyper =((directive='hyper')=>{
                     window.history.replaceState(null, document.title, getURL(element));
                 }
             })
-            let url = element.getAttribute('href');
-            element.removeAttribute('href')
-            element.setAttribute('_href',url);
+            let url = element.getAttribute(_href);
+            element.removeAttribute(_href)
+            element.setAttribute(_href,url)
         } else if (element.hasAttribute(_static)) {
             executeFetch(element)
-        } else if (element.hasAttribute('action')) {
-            element.addEventListener('submit',(event)=>{
+        } else if (element.hasAttribute(_action)) {
+            element.addEventListener(_submit,(event)=>{
                 event.preventDefault()
                 submitForm(event.target)
             })
+        }
+        if(element.hasAttribute('back-button')){
+            window.history.forward();
+            function noBack() {
+                window.history.forward();
+            }
         }
     }
 
@@ -345,4 +395,5 @@ const hyper =((directive='hyper')=>{
        handle(element);
     });
 });
-hyper()
+window.hyper()
+
