@@ -1,4 +1,9 @@
-
+/**
+* Hyper is a rich client libray for 
+* hypermedia handling and manipulation
+* Written by Resti Guay
+* Copywrite 2023
+*/
 let _pages=[];
 console.log('loaded')
 const hyper =((directive='hyper')=>{
