@@ -5,6 +5,7 @@
 * Copywrite 2023
 */
 let _pages=[];
+let mode = 'dev'
 window.hyper = ((directive='hyper')=>{
     let selector = '*['+directive +']'
     let pending=[];
@@ -30,6 +31,28 @@ window.hyper = ((directive='hyper')=>{
     let _contentType = 'text/html'
     let _disableBack = 'disable-back'
     let _htmln = 'htmln'
+    let _elems = [];
+    Object.prototype.hasProp=function(attr){
+        return this.hasOwnProperty(attr)===undefined
+    }
+    Object.prototype.getAttr=function(attr){
+        return this.getAttribute(attr)
+    }
+    HTMLElement.prototype.hasAttr=function(attr){
+        return _elems[this.id].hasProp(attr)
+    }
+    HTMLElement.prototype.getAttr=function(attr){
+        return _elems[this.id].getAttr(attr)
+    }
+    let hyprAttr= {
+        _spread : 'spread',
+        _extract : 'extract',
+        _htmln : 'htmln',
+        _prepare : 'prepare',
+        _static : 'static',
+        _replace : 'replace',
+        _fetch : 'fetch',
+    }
     var uid = function(i) {
         return function () {
             return _uid + (++i)
@@ -51,7 +74,8 @@ window.hyper = ((directive='hyper')=>{
             if(element.hasAttribute(_href) && element.getAttribute(_href).startsWith('javascript')){
                 eval(element.getAttribute(_href))
                 return  undefined
-            }if(element.hasAttribute('_href') && element.getAttribute('_href')){
+            }
+            if(element.hasAttribute('_href') && element.getAttribute('_href')){
                 return element.getAttribute('_href')+'?'+params;
             }
             return element.getAttribute(_href)+'?'+params;
@@ -73,7 +97,6 @@ window.hyper = ((directive='hyper')=>{
     function get(element) {
         let url = getURL(element)
         if(url !== undefined) {
-
             if (element.hasAttribute(_static) && pages[url] !== undefined) {
                 return pages[url];
             }
@@ -207,17 +230,18 @@ window.hyper = ((directive='hyper')=>{
             return
         } else if (element.hasAttribute(_htmln)) {
             let dom= new DOMParser().parseFromString(content, _contentType)
-            dom.querySelector('*[id]').forEach((elm)=>{
+            dom.querySelectorAll('*[id]').forEach((elm)=>{
                 let elem = document.getElementById(elm.id)
-                if(isHTML(elem.innerHTML)) {
-                    elem.innerHTML = elem.innerHTML
+                if(isHTML(elm.innerHTML)) {
+                    elem.innerHTML = elm.innerHTML
                 }else{
-                    elem.innerText = elem.innerText
+                    elem.innerText = elm.innerText
                 }
             })
+            return
         }
         if(element.nodeName === 'A') {
-            if(element.hasAttribute(_fill)){
+            if (element.hasAttribute(_fill)) {
                 fill(content, element)
             }
         }else if(element.hasAttribute(_replace)){
@@ -328,12 +352,24 @@ window.hyper = ((directive='hyper')=>{
             null
         )
     }
-
+    function register(element){
+        _elems[element.id]={};
+        for (let hyprAttrKey in hyprAttr) {
+            let attr = hyprAttr[hyprAttrKey]
+            if(element.hasAttribute(attr)){
+                _elems[element.id][attr]=element.getAttribute(attr)
+                if(mode !== 'dev'){
+                    element.removeAttribute(attr)
+                }
+            }
+        }
+    }
     async function handle(element){
         if(!element.hasAttribute(directive)){
             return;
         }
         setHID(element)
+        register(element)
         if (element.hasAttribute(_listen)) {
             let listenParts= element.getAttribute(_listen).toLowerCase().split(':')
             let elem = document.querySelector(listenParts[0])
@@ -383,6 +419,11 @@ window.hyper = ((directive='hyper')=>{
                 submitForm(event.target)
             })
         }
+        if(element.nodeName === 'BUTTON' && !element.hasAttribute(_trigger)) {
+            element.addEventListener('click', () => {
+                executeFetch(element)
+            })
+        }
         if(element.hasAttribute('back-button')){
             window.history.forward();
             function noBack() {
@@ -395,5 +436,6 @@ window.hyper = ((directive='hyper')=>{
        handle(element);
     });
 });
-window.hyper()
+window.addEventListener('load',window.hyper())
+
 
