@@ -6,6 +6,24 @@ const f = {
     basePath:'',
     pendingScripts:0,
     readyScripts:0,
+    events: {
+        topics : [],
+        publish: (topic, frgmnt) => {
+            if (!f.events.topics[topic]===undefined) return;
+
+            f.events.topics[topic].forEach((cbck) => {
+                cbck(frgmnt)
+            });
+         },
+         subscribe: (topic, callback) => {
+             if (f.events.topics[topic]===undefined){
+                 f.events.topics[topic]=[]
+             }
+             f.events.topics[topic][f.events.topics[topic].length]=callback;
+        },
+        ajax_start:'ajax_start',
+        ajax_end:'ajax_end',
+    },
     handle:(frgmnt)=>{
         console.log(frgmnt)
     },
@@ -19,17 +37,21 @@ const f = {
     },
     initElements:()=>{
         document.querySelectorAll(f.selector).forEach((frgmnt)=> {
-            f.handle(frgmnt)
-            let mdls = frgmnt.getAttribute(fragment.directive).split("|")
-            mdls.forEach((mld)=>{
-                f[mld].handle(frgmnt)
-            })
+            if(frgmnt.nodeName!=="BODY") {
+                f.handle(frgmnt)
+                let mdls = frgmnt.getAttribute(fragment.directive).split("|")
+                mdls.forEach((mld) => {
+                    if (mld !== "") {
+                        f[mld].handle(frgmnt)
+                    }
+                })
+            }
         });
     },
     loadScripts:(frgmnt)=>{
         let mdls = frgmnt.getAttribute(fragment.directive).split("|")
         mdls.forEach((mdl)=>{
-            if(f.scripts[mdl]===undefined){
+            if(mdl!=="" && f.scripts[mdl]===undefined){
                 f.pendingScripts++;
                 f.scripts[mdl]=true;
                 let scrt = document.createElement('script');
@@ -52,9 +74,8 @@ const f = {
 }
 window.fragment=f
 document.onreadystatechange=(e)=>{
-    console.log(e)
-    //fragment.start('fragment',"/assets/")
-    fragment.start()
+    fragment.start('fragment',"/hyper/")
+    //fragment.start()
 }
 document.addEventListener('ready',()=>{
     while(f.scripts.length!==f.readyScripts){

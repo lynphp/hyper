@@ -12,22 +12,44 @@ window.fetcher={
     _endProgress:(frgmnt)=>{},
     pages:[],
     _contentType:'text/html',
+    _uid:'id',
+    _lastId :0,
+    _intervals:[],
     init:()=>{},
+    uid :  ()=> {
+            return fetcher._uid + (++fetcher._lastId)
+    },
+    setHID:(frgmnt)=>{
+        let hid = ''
+        if (!frgmnt.hasAttribute(fetcher._uid)) {
+            hid = fetcher.uid();
+            frgmnt.setAttribute(fetcher._uid,hid)
+        }
+        return hid;
+    },
     handle:async (frgmnt)=>{
         if(frgmnt.hasAttribute(fetcher._trigger)) {
-            if (frgmnt.getAttribute(fetcher._trigger) === 'load') {
-                fetcher.do(await fetcher.fetch(frgmnt), frgmnt)
-            } else if (frgmnt.getAttribute(fetcher._trigger) === 'click') {
-                frgmnt.addEventListener('click', async () => {
-                    fetcher.do(fetcher.fetch(frgmnt), frgmnt)
-                })
+            for (const trg of frgmnt.getAttribute(fetcher._trigger).split('|')) {
+                if (trg === 'load') {
+                    fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
+                } else if (trg === 'click') {
+                    frgmnt.addEventListener('click', async () => {
+                        fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
+                    })
+                } else if (trg.startsWith('every')) {
+                    if(fetcher._intervals[frgmnt.id]===undefined) {
+                        fetcher._intervals[frgmnt.id] = setInterval(async () => {
+                            fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
+                        }, parseInt(frgmnt.getAttribute(fetcher._trigger).split(":")[1]))
+                    }
+                }
             }
         }else if (frgmnt.nodeName==='BUTTON'){
             frgmnt.addEventListener('click', async () => {
-                fetcher.do(await fetcher.fetch(frgmnt), frgmnt)
+                fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
             })
         }else{
-            fetcher.do(await fetcher.fetch(frgmnt),frgmnt)
+            fetcher.populate(await fetcher.fetch(frgmnt),frgmnt)
         }
     },
     isHTML:(content)=>{
@@ -35,37 +57,55 @@ window.fetcher={
         elem.innerHTML = content;
         return elem.children.length > 0;
     },
-    do:(content, frgmnt)=>{
+    populate:(content, frgmnt)=>{
         let doc = new DOMParser().parseFromString(content, 'text/html')
-        if(frgmnt.hasAttribute(fetcher._fill)) {
-            let elem = document.querySelector(frgmnt.getAttribute(fetcher._fill))
-            if (elem !== undefined) {
-                if (doc.body.getElementById(frgmnt.id) !== undefined) {
-                    frgmnt.replaceWith(doc.body.getElementById(frgmnt.id))
-                } else if (this.isHTML(content)) {
-                    elem.innerHTML = doc.body.innerHTML
-                } else {
-                    frgmnt.replaceWith(content)
-                }
-            } else if (window.env === 'dev') {
-                alert(frgmnt.getAttribute(this._fill) + " element does not exist")
+        doc.querySelectorAll('*[' + fetcher._fetch + ']').forEach((elem)=>{
+            if(!elem.hasAttribute("id")){
+                elem.id=fetcher.setHID(elem)
             }
-        }else if(doc.body.querySelectorAll('*[id]').length>0){
-            doc.body.querySelectorAll('*[id]').forEach((elem)=>{
-                if(document.getElementById(elem.id)!==null){
-                    if(document.getElementById(elem.id).nodeName===elem.nodeName){
-                        document.getElementById(elem.id).innerHTML=elem.innerHTML
+        })
+        content=doc.body.innerHTML;
+        if(frgmnt.hasAttribute(fetcher._fill)) {
+            let fillTarget = frgmnt.getAttribute(fetcher._fill);
+            if (fillTarget === "self") {
+                frgmnt.innerHTML = content;
+                frgmnt.querySelectorAll('*[' + fetcher._fetch + ']').forEach(async (elem) => {
+                    await fetcher.handle(elem)
+                })
+            } else {
+                let elem = document.querySelector(frgmnt.getAttribute(fetcher._fill))
+                if (elem !== undefined) {
+                    if (doc.body.getElementById(frgmnt.id) !== undefined) {
+                        frgmnt.replaceWith(doc.body.getElementById(frgmnt.id))
+                    } else if (this.isHTML(content)) {
+                        elem.innerHTML = doc.body.innerHTML
+                    } else {
+                        frgmnt.replaceWith(content)
+                    }
+                } else if (window.env === 'dev') {
+                    alert(frgmnt.getAttribute(fetcher._fill) + " element does not exist")
+                }
+            }
+        }else if(frgmnt.hasAttribute(fetcher._replace)) {
+            frgmnt.replaceWith(content)
+        }else if(doc.body.querySelectorAll('*[id]').length>0){//replace by similar id
+            doc.body.querySelectorAll('*[id]').forEach(async (elem)=>{
+                if(document.getElementById(elem.id) !== null){
+                    if('innerHTML' in document.getElementById(elem.id)){
+                        document.getElementById(elem.id).innerHTML = elem.innerHTML
+                    }else {
+                        document.getElementById(elem.id).replaceWith(elem)
+                    }
+                    if(elem.id !== frgmnt.id) {
+                        await fetcher.handle(document.getElementById(elem.id))
                     }
                 }
             })
-        }else{
-            frgmnt.replaceWith(content)
         }
-
-        fetcher._endProgress(frgmnt);
+        fragment.events.publish(fragment.events.ajax_end,frgmnt);
     },
     fetch: (frgmnt)=>{
-        fetcher._startProgress(frgmnt);
+        fragment.events.publish(fragment.events.ajax_start,frgmnt);
         return fetcher.get(frgmnt);
     },
     getURL:(frgmnt)=> {
@@ -105,8 +145,8 @@ window.fetcher={
                     mode: "no-cors",
                     headers: {'Accept': fetcher._contentType, 'x-fragment-power':fetcher.name}
                 });
-                return fetch(getRequest).then( function  (response) {
-                    return response.text();
+                return fetch(getRequest).then( async function   (response) {
+                    return await response.text();
                 }).catch(function (err) {
                     console.log('Failed to fetch page: ', err)
                     return ''
