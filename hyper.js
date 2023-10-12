@@ -33,10 +33,10 @@ window.hyper = ((directive='hyper')=>{
     let _htmln = 'htmln'
     let _elems = [];
     Object.prototype.hasProp=function(attr){
-        return this.hasOwnProperty(attr)===undefined
+        return this.hasOwnProperty(attr)
     }
     Object.prototype.getAttr=function(attr){
-        return this.getAttribute(attr)
+        return this[attr]
     }
     HTMLElement.prototype.hasAttr=function(attr){
         return _elems[this.id].hasProp(attr)
@@ -48,10 +48,12 @@ window.hyper = ((directive='hyper')=>{
         _spread : 'spread',
         _extract : 'extract',
         _htmln : 'htmln',
+        _trigger : 'trigger',
         _prepare : 'prepare',
         _static : 'static',
         _replace : 'replace',
         _fetch : 'fetch',
+        _directive:directive
     }
     var uid = function(i) {
         return function () {
@@ -126,7 +128,7 @@ window.hyper = ((directive='hyper')=>{
     function post(element){
         let url = getURL(element)
         if(url !== undefined) {
-            if (element.hasAttribute(_static) && pages[url] !== undefined) {
+            if (element.hasAttr(_static) && pages[url] !== undefined) {
                 return pages[url]
             }
             function postAndWait(data) {
@@ -246,7 +248,7 @@ window.hyper = ((directive='hyper')=>{
             }
         }else if(element.hasAttribute(_replace)){
             replace(content, element)
-        }else if(element.hasAttribute(_fill)) {
+        }else if(element.hasAttr(_fill)) {
             fill(content, element)
         }else {
             element.innerHTML = content
@@ -294,7 +296,7 @@ window.hyper = ((directive='hyper')=>{
         let url = getURL(element)
         let data= {}
         if(url !== undefined) {
-            if (element.hasAttribute(_static) && pages[url] !== undefined) {
+            if (element.hasAttr(_static) && pages[url] !== undefined) {
                 return pages[url]
             }
             async function postAndWait(data) {
@@ -322,7 +324,6 @@ window.hyper = ((directive='hyper')=>{
             return ''
         }
     }
-
     function prepare(element){
         get(element);
 
@@ -370,14 +371,14 @@ window.hyper = ((directive='hyper')=>{
         }
         setHID(element)
         register(element)
-        if (element.hasAttribute(_listen)) {
+        if (element.hasAttr(_listen)) {
             let listenParts= element.getAttribute(_listen).toLowerCase().split(':')
             let elem = document.querySelector(listenParts[0])
             elem.addEventListener(listenParts[1], ()=>{
                  executeFetch(element)
             })
-        } else if (element.hasAttribute(_trigger)) {
-            let on= element.getAttribute(_trigger).toLowerCase().split('|')
+        } else if (element.hasAttr(_trigger)) {
+            let on= element.getAttr(_trigger).toLowerCase().split('|')
             on.forEach( (event) => {
                 if ( event === 'load') {
                      executeFetch(element)
@@ -395,7 +396,7 @@ window.hyper = ((directive='hyper')=>{
                     }
                 }
             })
-        } else if (element.hasAttribute(_prepare)) {
+        } else if (element.hasAttr(_prepare)) {
             if(pages[getURL(element)]===undefined) {
                 pages[getURL(element)] = await fetchContent(element)
             }
@@ -411,20 +412,20 @@ window.hyper = ((directive='hyper')=>{
             let url = element.getAttribute(_href);
             element.removeAttribute(_href)
             element.setAttribute(_href,url)
-        } else if (element.hasAttribute(_static)) {
+        } else if (element.hasAttr(_static)) {
             executeFetch(element)
-        } else if (element.hasAttribute(_action)) {
+        } else if (element.hasAttr(_action)) {
             element.addEventListener(_submit,(event)=>{
                 event.preventDefault()
                 submitForm(event.target)
             })
         }
-        if(element.nodeName === 'BUTTON' && !element.hasAttribute(_trigger)) {
+        if(element.nodeName === 'BUTTON' && !element.hasAttr(_trigger)) {
             element.addEventListener('click', () => {
                 executeFetch(element)
             })
         }
-        if(element.hasAttribute('back-button')){
+        if(element.hasAttr('back-button')){
             window.history.forward();
             function noBack() {
                 window.history.forward();
