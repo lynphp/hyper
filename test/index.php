@@ -12,6 +12,7 @@
     <div fragment="webcom" webcom-fetch="GET:/test/components/HelloWorld.php" webcom-trigger="load"></div>
     <div fragment="fetcher" fetcher-fetch="GET:/test/components/HelloWorld.php" fetcher-trigger="load"></div>
     <div id="toggle-1">Hello</div>
-    <button id="togler" fragment="toggle" toggle-target="#toggle-1.visible=false|true">Toggle</button>
+    <button id="toggle-2" >Toggle</button>
+    <button id="togler" fragment="toggle" toggle-target="#toggle-1.style.display=none|block,#toggle-2.disabled=true|remove">Toggle</button>
 </body>
 </html>
