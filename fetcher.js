@@ -12,21 +12,9 @@ window.fetcher={
     _endProgress:(frgmnt)=>{},
     pages:[],
     _contentType:'text/html',
-    _uid:'id',
     _lastId :0,
     _intervals:[],
     init:()=>{},
-    uid :  ()=> {
-            return fetcher._uid + (++fetcher._lastId)
-    },
-    setHID:(frgmnt)=>{
-        let hid = ''
-        if (!frgmnt.hasAttribute(fetcher._uid)) {
-            hid = fetcher.uid();
-            frgmnt.setAttribute(fetcher._uid,hid)
-        }
-        return hid;
-    },
     handle:async (frgmnt)=>{
         if(frgmnt.hasAttribute(fetcher._trigger)) {
             for (const trg of frgmnt.getAttribute(fetcher._trigger).split('|')) {
@@ -61,7 +49,7 @@ window.fetcher={
         let doc = new DOMParser().parseFromString(content, 'text/html')
         doc.querySelectorAll('*[' + fetcher._fetch + ']').forEach((elem)=>{
             if(!elem.hasAttribute("id")){
-                elem.id=fetcher.setHID(elem)
+                elem.id=setHID(elem)
             }
         })
         content=doc.body.innerHTML;
@@ -108,36 +96,8 @@ window.fetcher={
         fragment.events.publish(fragment.events.ajax_start,frgmnt);
         return fetcher.get(frgmnt);
     },
-    getURL:(frgmnt)=> {
-        let params = fetcher.getDataAttribute(frgmnt)
-        if (frgmnt.hasAttribute(fetcher._fetch)) {
-            return frgmnt.getAttribute(fetcher._fetch).split(":")[1] + '?' + params
-        } else if (frgmnt.nodeName === 'A') {
-            if (frgmnt.hasAttribute(fetcher._href) && frgmnt.getAttribute(fetcher._href).startsWith('javascript')) {
-                eval(frgmnt.getAttribute(fetcher._href))
-                return undefined
-            }
-            if (frgmnt.hasAttribute('_href') && frgmnt.getAttribute('_href')) {
-                return frgmnt.getAttribute('_href') + '?' + params;
-            }
-            return frgmnt.getAttribute(this._href) + '?' + params;
-        } else if (frgmnt.nodeName === 'FORM' && frgmnt.hasAttribute(fetcher._action)) {
-            return frgmnt.getAttribute(fetcher._action)
-        }
-    },
-    getDataAttribute:(element)=>{
-        let queryParams = {}
-        Object.getOwnPropertyNames(element.dataset).forEach((prop)=>{
-            if(element.dataset[prop].startsWith(fetcher._bind)){
-                queryParams[prop] = document.querySelector(element.dataset[prop].split(':')[1])?.value
-            } else {
-                queryParams[prop] = element.dataset[prop]
-            }
-        });
-        return (new URLSearchParams(queryParams)).toString()
-    },
     get:async (element)=> {
-        let url = fetcher.getURL(element)
+        let url = getURL(element,fetcher._fetch)
         if(url !== undefined) {
             function getAndWait(url) {
                 const getRequest= new Request(url, {
