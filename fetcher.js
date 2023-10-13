@@ -13,6 +13,7 @@ window.fetcher={
     pages:[],
     _contentType:'text/html',
     _lastId :0,
+    fetchFragment:window.fragment.fetchFragment,
     _intervals:[],
     init:()=>{},
     handle:async (frgmnt)=>{
@@ -36,8 +37,6 @@ window.fetcher={
             frgmnt.addEventListener('click', async () => {
                 fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
             })
-        }else{
-            fetcher.populate(await fetcher.fetch(frgmnt),frgmnt)
         }
     },
     isHTML:(content)=>{
@@ -94,28 +93,13 @@ window.fetcher={
     },
     fetch: (frgmnt)=>{
         fragment.events.publish(fragment.events.ajax_start,frgmnt);
-        return fetcher.get(frgmnt);
+        let url = getURL(frgmnt,fetcher._fetch)
+        const request= new Request(url, {
+            method: getMethod(frgmnt,fetcher._fetch),
+            mode: "no-cors",
+            headers: {'Accept': fetcher._contentType, 'x-fragment-power':fetcher.name}
+        });
+        return fetcher.fetchFragment(request);
     },
-    get:async (element)=> {
-        let url = getURL(element,fetcher._fetch)
-        if(url !== undefined) {
-            function getAndWait(url) {
-                const getRequest= new Request(url, {
-                    method: "GET",
-                    mode: "no-cors",
-                    headers: {'Accept': fetcher._contentType, 'x-fragment-power':fetcher.name}
-                });
-                return fetch(getRequest).then( async function   (response) {
-                    return await response.text();
-                }).catch(function (err) {
-                    console.log('Failed to fetch page: ', err)
-                    return ''
-                });
-            }
-            return await getAndWait(url)
-        } else {
-            return '';
-        }
-    }
 }
 fragment?.tryRun(fetcher);

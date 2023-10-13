@@ -60,7 +60,7 @@ const f = {
                 f.pendingScripts++;
                 f.scripts[mdl]=true;
                 let scrt = document.createElement('script');
-                scrt.src = f.basePath+ mdl +".js";
+                scrt.src = window.jslib[mdl];
                 document.head.appendChild(scrt);
                 scrt.onload=()=>{
                     console.log(mdl+' loaded')
@@ -69,7 +69,6 @@ const f = {
         })
     },
     initGlobal:()=>{
-
         window.getURL=(frgmnt,attr='')=> {
             let params = getDataAttribute(frgmnt)
             if (frgmnt.hasAttribute(attr)) {
@@ -87,6 +86,9 @@ const f = {
                 return frgmnt.getAttribute(fetcher._action)
             }
         }
+        window.getMethod=(frgmnt, attr)=>{
+            return frgmnt.getAttribute(attr).split(":")[0]
+        },
         window.getDataAttribute=(element)=> {
             let queryParams = {}
             Object.getOwnPropertyNames(element.dataset).forEach((prop) => {
@@ -115,18 +117,21 @@ const f = {
             f.loadScripts(frgmnt)
         });
     },
-    fetchData : async (request) =>{
-        try {
-            const response = await fetch(request);
-            return await response.text();
-        } catch (error) {
-            console.error('Error:', error);
+    fetchFragment:async (request)=> {
+        function getAndWait(request) {
+            return fetch(request).then( async function   (response) {
+                return await response.text();
+            }).catch(function (err) {
+                console.log('Failed to fetch page: ', err)
+                return ''
+            });
         }
-    }
+        return await getAndWait(request)
+    },
 }
 window.fragment=f
 document.onreadystatechange=(e)=>{
-    fragment.start('fragment',"/")
+    fragment.start('fragment',"/assets/fragment/")
     //fragment.start()
 }
 document.addEventListener('ready',()=>{
