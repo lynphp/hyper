@@ -1,41 +1,90 @@
+/**
+ * fragment="<modules>"
+ * fragment-trigger="visible"
+ * visibility-fetch="GET:/url"
+ * visibility-fetch="GET:/url"
+ */
+
+
 window.env='dev'
 const f = {
     scripts:[],
     directive:'',
     selector :'',
     basePath:'',
+    _trigger:'fragment-trigger',
+    _triggers:[],
     pendingScripts:0,
     readyScripts:0,
+    _registerHandlersQueue:[],
     _lastId:0,
     _uid:'id',
     events: {
         topics : [],
         publish: (topic, frgmnt) => {
             if (f.events.topics[topic]===undefined) return;
-
             f.events.topics[topic]?.forEach((cbck) => {
                 cbck(frgmnt)
             });
          },
-         subscribe: (topic, callback) => {
+         subscribe: (topic, callback, name='a library') => {
+            if(f.events[topic]===undefined){
+                f.events.registerTopic(topic)
+            }
              if (f.events.topics[topic]===undefined){
                  f.events.topics[topic]=[]
              }
              f.events.topics[topic][f.events.topics[topic].length]=callback;
+             console.debug(name + ' just registered to ' + topic)
+        },
+        registerTopic:(newTopic)=>{
+            f.events[newTopic]=newTopic
+            console.debug('registerTopic:' + newTopic)
         },
         ajax_start:'ajax_start',
         ajax_end:'ajax_end',
+        init_yours:'init_yours',
     },
     uid :  ()=> {
         return f._uid + (++f._lastId)
     },
     handle:(frgmnt)=>{
-        let mdls = frgmnt.getAttribute(fragment.directive).split("|")
-        mdls.forEach((mld) => {
-            if (mld !== "") {
-                f[mld].handle(frgmnt)
+        setHID(frgmnt)
+        if(frgmnt.getAttribute(fragment._trigger)!==null){
+            let trgrs = frgmnt.getAttribute(fragment._trigger).split("|")
+            trgrs.forEach((trg)=>{
+                if(f._triggers[trg]!==undefined){
+                    f._triggers[trg](frgmnt);
+                }
+            })
+        }
+    },
+    registerTriggerHandler:(trigger, callback)=>{
+        if(f._triggers[trigger]===undefined){
+            f._triggers[trigger]=callback
+        }else{
+            console.warn(trigger + ' is already registered')
+        }
+    },
+    registerDependency:async (module)=>{
+        f.loadDependency(module)
+    },
+    /**
+     *
+     * @param func
+     * @param delay
+     * @returns {(function(...[*]): void)|*}
+     */
+    debounce:(func, delay)=> {
+        let timeoutId;
+        return function(...args) {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
             }
-        })
+            timeoutId = setTimeout(() => {
+                func.apply(this, args);
+            }, delay);
+        };
     },
     tryRun:(fn)=>{
         f[fn.name]=fn
@@ -49,24 +98,34 @@ const f = {
         document.querySelectorAll(f.selector).forEach((frgmnt)=> {
             if(frgmnt.nodeName!=="BODY") {
                 f.handle(frgmnt)
-
             }
         });
     },
     loadScripts:(frgmnt)=>{
         let mdls = frgmnt.getAttribute(fragment.directive).split("|")
         mdls.forEach((mdl)=>{
-            if(mdl!=="" && f.scripts[mdl]===undefined){
-                f.pendingScripts++;
-                f.scripts[mdl]=true;
-                let scrt = document.createElement('script');
-                scrt.src = window.jslib[mdl];
-                document.head.appendChild(scrt);
-                scrt.onload=()=>{
-                    console.log(mdl+' loaded')
-                }
-            }
+            f.loadDependency(mdl)
         })
+    },
+    loadDependency:(mdl)=>{
+        if(mdl!=="" && f.scripts[mdl]===undefined && window.jslib[mdl]!==undefined){
+            f.pendingScripts++;
+            f.scripts[mdl]=true;
+            let scrt = document.createElement('script');
+            scrt.src = window.jslib[mdl];
+            document.head.appendChild(scrt);
+            scrt.onload=()=>{
+                console.log(mdl+' loaded')
+                return true;
+            }
+        }else{
+            if(f.scripts[mdl]!==undefined){
+                //console.warn('already load ' + mdl)
+            }else{
+                console.error('cant load ' + mdl +'.js')
+            }
+            return false;
+        }
     },
     initGlobal:()=>{
         window.getURL=(frgmnt,attr='')=> {

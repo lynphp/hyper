@@ -48,7 +48,7 @@ window.fetcher={
         let doc = new DOMParser().parseFromString(content, 'text/html')
         doc.querySelectorAll('*[' + fetcher._fetch + ']').forEach((elem)=>{
             if(!elem.hasAttribute("id")){
-                elem.id=setHID(elem)
+                setHID(elem)
             }
         })
         content=doc.body.innerHTML;
@@ -80,7 +80,7 @@ window.fetcher={
                 if(document.getElementById(elem.id) !== null){
                     if('innerHTML' in document.getElementById(elem.id)){
                         document.getElementById(elem.id).innerHTML = elem.innerHTML
-                    }else {
+                    } else {
                         document.getElementById(elem.id).replaceWith(elem)
                     }
                     if(elem.id !== frgmnt.id) {
