@@ -35,11 +35,9 @@ const f = {
                  f.events.topics[topic]=[]
              }
              f.events.topics[topic][f.events.topics[topic].length]=callback;
-             console.debug(name + ' just registered to ' + topic)
         },
         registerTopic:(newTopic)=>{
             f.events[newTopic]=newTopic
-            console.debug('registerTopic:' + newTopic)
         },
         ajax_start:'ajax_start',
         ajax_end:'ajax_end',
@@ -66,8 +64,8 @@ const f = {
             console.warn(trigger + ' is already registered')
         }
     },
-    registerDependency:async (module)=>{
-        f.loadDependency(module)
+    registerDependency:async (module, dependent)=>{
+        f.loadDependency(module,dependent)
     },
     /**
      *
@@ -107,7 +105,7 @@ const f = {
             f.loadDependency(mdl)
         })
     },
-    loadDependency:(mdl)=>{
+    loadDependency:(mdl, dependent=null)=>{
         if(mdl!=="" && f.scripts[mdl]===undefined && window.jslib[mdl]!==undefined){
             f.pendingScripts++;
             f.scripts[mdl]=true;
@@ -116,6 +114,10 @@ const f = {
             document.head.appendChild(scrt);
             scrt.onload=()=>{
                 console.log(mdl+' loaded')
+                if(dependent!==null){
+                    dependent['dependencyAdded'](window[mdl])
+                }
+                f.tryRun(window[mdl])
                 return true;
             }
         }else{

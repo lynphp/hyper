@@ -1,10 +1,10 @@
 
 // toggle-prop=".disabled=false|true"
 // toggle-prop=".disabled=false|remove"
-// toggle-prop=".element-id.visible=false|remove"
-// toggle-prop="#element-id.disabled=false|remove"
-// toggle-prop="#element-id.class=frm-field|remove"
-const toggle={
+// toggle-prop=".element-id.visible=false/remove|"
+// toggle-prop="#element-id.disabled=false/remove"
+// toggle-prop="#element-id.class=frm-field/remove"
+window.toggle={
     name:'toggle',
     _toggleProp:'toggle-target',
     _toggleTrigger:'toggle-trigger',
@@ -12,27 +12,27 @@ const toggle={
         fragment.events.subscribe(fragment.events.ajax_start,toggle.toggleState)
         fragment.events.subscribe(fragment.events.ajax_end,toggle.toggleState)
     },
-    toggleState:(frgmnt0, frgmnt1= null,prop=[],values=[])=>{
+    toggleState:(frgmnt0,attr, frgmnt1= null,prop=[],values=[])=>{
         if(frgmnt1===null){
             frgmnt1 = document.createElement('div')
-            frgmnt1.setAttribute(toggle._toggleProp,'')
+            frgmnt1.setAttribute(attr,'')
         }
-        if(frgmnt0.id !== frgmnt1.id && frgmnt1.hasAttribute(toggle._toggleProp)){
-            if(frgmnt0.getAttribute(toggle._toggleProp)!==null){
-                let targets = frgmnt0.getAttribute(toggle._toggleProp).split(',')
+        if(frgmnt0.id !== frgmnt1.id && frgmnt1.hasAttribute(attr)){
+            if(frgmnt0.getAttribute(attr)!==null){
+                let targets = frgmnt0.getAttribute(attr).split('|')
                 targets.forEach((trgt) => {
                     let selectorProp = trgt.substring(0, trgt.indexOf('=', 0)).split(".")
                     let propValues = selectorProp[1].split('=')
-                    let options = trgt.split('=')[1].split('|')
+                    let options = trgt.split('=')[1].split('/')
                     if (selectorProp[0] === 'self') {
-                        toggle.toggleState(frgmnt0,frgmnt1,selectorProp,options)
+                        toggle.toggleState(frgmnt0,attr,frgmnt1,selectorProp,options)
                     }else if (selectorProp[0].startsWith('.')) {
                         document.querySelectorAll(selectorProp[0]).forEach((elem)=>{
-                            toggle.toggleState(frgmnt0,elem,selectorProp,options)
+                            toggle.toggleState(frgmnt0,attr,elem,selectorProp,options)
                         })
                     }else if (selectorProp[0].startsWith('#')) {
-                        if (document.querySelector(selectorProp[0])!==undefined){
-                            toggle.toggleState(frgmnt0,document.querySelector(selectorProp[0]),selectorProp,options)
+                        if (document.querySelector(selectorProp[0])!==null){
+                            toggle.toggleState(frgmnt0,attr,document.querySelector(selectorProp[0]),selectorProp,options)
                         }
                     }
                 })
@@ -66,11 +66,10 @@ const toggle={
 
             }else if(frgmnt.nodeName==='BUTTON'){
                 frgmnt.addEventListener('click',()=>{
-                    toggle.toggleState(frgmnt)
+                    toggle.toggleState(toggle._toggleProp,frgmnt)
                 })
             }
         }
         console.log('progress')
     }
 }
-fragment?.tryRun(toggle);

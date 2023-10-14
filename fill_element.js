@@ -1,4 +1,4 @@
-const fill_element={
+window.fill_element={
     name:'stream',
     _trigger:'stream-trigger',
     _fetch:'stream-fetch',
@@ -16,4 +16,3 @@ const fill_element={
 
     }
 }
-fragment?.tryRun(fill_element);

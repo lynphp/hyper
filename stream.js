@@ -1,4 +1,4 @@
-const stream={
+window.stream={
     name:'stream',
     _trigger:'stream-trigger',
     _fetch:'stream-fetch',
@@ -13,4 +13,3 @@ const stream={
         console.log('endLog')
     }
 }
-fragment?.tryRun(stream);

@@ -1,4 +1,4 @@
-const logger={
+window.logger={
     name:'logger',
     _progressText:'logger-elem',
     init:()=>{
@@ -12,4 +12,3 @@ const logger={
         console.log('endLog')
     }
 }
-fragment?.tryRun(progress);

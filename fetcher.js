@@ -20,22 +20,22 @@ window.fetcher={
         if(frgmnt.hasAttribute(fetcher._trigger)) {
             for (const trg of frgmnt.getAttribute(fetcher._trigger).split('|')) {
                 if (trg === 'load') {
-                    fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
+                    fetcher.populate(await fetcher.fetch(frgmnt,fetcher._fetch), frgmnt)
                 } else if (trg === 'click') {
                     frgmnt.addEventListener('click', async () => {
-                        fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
+                        fetcher.populate(await fetcher.fetch(frgmnt,fetcher._fetch), frgmnt)
                     })
                 } else if (trg.startsWith('every')) {
                     if(fetcher._intervals[frgmnt.id]===undefined) {
                         fetcher._intervals[frgmnt.id] = setInterval(async () => {
-                            fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
+                            fetcher.populate(await fetcher.fetch(frgmnt,fetcher._fetch), frgmnt)
                         }, parseInt(frgmnt.getAttribute(fetcher._trigger).split(":")[1]))
                     }
                 }
             }
         }else if (frgmnt.nodeName==='BUTTON'){
             frgmnt.addEventListener('click', async () => {
-                fetcher.populate(await fetcher.fetch(frgmnt), frgmnt)
+                fetcher.populate(await fetcher.fetch(frgmnt,fetcher._fetch), frgmnt)
             })
         }
     },
@@ -91,11 +91,11 @@ window.fetcher={
         }
         fragment.events.publish(fragment.events.ajax_end,frgmnt);
     },
-    fetch: (frgmnt)=>{
+    fetch: (frgmnt, attr)=>{
         fragment.events.publish(fragment.events.ajax_start,frgmnt);
-        let url = getURL(frgmnt,fetcher._fetch)
+        let url = getURL(frgmnt,attr)
         const request= new Request(url, {
-            method: getMethod(frgmnt,fetcher._fetch),
+            method: getMethod(frgmnt,attr),
             mode: "no-cors",
             headers: {'Accept': fetcher._contentType, 'x-fragment-power':fetcher.name}
         });
