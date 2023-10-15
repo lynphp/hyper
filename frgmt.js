@@ -3,25 +3,18 @@ window.frgmt = (function () {
     const config = {
         name:'FragmentJS',
         version:'0.1.0',
-        scripts: [],
         directive: '',
         selector: '',
-        _basePath: '',
-        _triggerAttr: 'fragment-trigger',
-        _triggers: [],
-        pendingScripts: 0,
-        readyScripts: 0,
-        _registerHandlersQueue: [],
-        _lastId: 0,
-        _uid: 'id',
+        basePath: '',
+        triggerAttr: 'fragment-trigger',
     }
     const state={
         pendingScripts:0,
         readyScripts:0,
         scripts:[],
-        _triggers:[],
-        _lastId:0,
-        _uid:'id',
+        triggers:[],
+        lastId:0,
+        uid:'id',
         topics : [],
     }
     const frgmt = function (API) {
@@ -31,7 +24,7 @@ window.frgmt = (function () {
     const iAPI=(()=>{
         return {
             uid :  ()=> {
-                return state._uid + (++state._lastId)
+                return state.uid + (++state.lastId)
             },
             initGlobal:()=>{
                 HTMLElement.prototype.hasAttr=function(qualifiedName){
@@ -90,8 +83,8 @@ window.frgmt = (function () {
                 }
                 window.setHID=(frgmnt)=>{
                     if('hasAttribute' in frgmnt){
-                        if (!frgmnt.hasAttr(state._uid)) {
-                            frgmnt.setAttribute(state._uid,iAPI.uid())
+                        if (!frgmnt.hasAttr(state.uid)) {
+                            frgmnt.setAttribute(state.uid,iAPI.uid())
                         }
                     }
                 }
@@ -141,7 +134,7 @@ window.frgmt = (function () {
                 iAPI.initGlobal()
                 config.directive = directive
                 config.selector = '*[' + config.directive + ']'
-                config._basePath = basePath
+                config.basePath = basePath
                 document.querySelectorAll(config.selector).forEach((frgmnt) => {
                     iAPI.loadScripts(frgmnt)
                 });
@@ -161,17 +154,17 @@ window.frgmt = (function () {
                 }
             },
             registerTriggerHandler:(trigger, callback)=>{
-                if(state._triggers[trigger]===undefined){
-                    state._triggers[trigger]=callback
+                if(state.triggers[trigger]===undefined){
+                    state.triggers[trigger]=callback
                 }
             },
             handle:(frgmnt)=>{
                 setHID(frgmnt)
-                if(frgmnt.getAttribute(config._triggerAttr)!==null){
-                    let trgrs = frgmnt.getAttribute(config._triggerAttr).split("|")
+                if(frgmnt.getAttribute(config.triggerAttr)!==null){
+                    let trgrs = frgmnt.getAttribute(config.triggerAttr).split("|")
                     trgrs.forEach((trg)=>{
-                        if(state._triggers[trg]!==undefined){
-                            state._triggers[trg](frgmnt);
+                        if(state.triggers[trg]!==undefined){
+                            state.triggers[trg](frgmnt);
                         }
                     })
                 }
