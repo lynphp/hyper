@@ -34,11 +34,14 @@ window.frgmt = (function () {
                 return state._uid + (++state._lastId)
             },
             initGlobal:()=>{
-                HTMLElement.prototype.hA=function(qualifiedName){
+                HTMLElement.prototype.hasAttr=function(qualifiedName){
                     return this.hasAttribute(qualifiedName)
                 }
                 String.prototype.contains=function(chars){
                     return this.indexOf(chars)>-1;
+                }
+                HTMLElement.prototype.setAttr=function(qualifiedName,value){
+                    return this.setAttribute(qualifiedName,value)
                 }
                 HTMLElement.prototype.getAttr=function(qualifiedName){
                     return this.getAttribute(qualifiedName)
@@ -51,7 +54,7 @@ window.frgmt = (function () {
                  */
                 window.getURL=(frgmnt,attr='')=> {
                     let params = getDataAttribute(frgmnt)
-                    if (frgmnt.hA(attr)) {
+                    if (frgmnt.hasAttr(attr)) {
                         let segments = frgmnt.getAttr(attr).split(":");
                         if(segments.length>2){
                             return segments[1] +":"+ segments[2] + '?' + params
@@ -59,15 +62,15 @@ window.frgmt = (function () {
                             return segments[1] + '?' + params;
                         }
                     } else if (frgmnt.nodeName === 'A') {
-                        if (frgmnt.hA(fetcher._href) && frgmnt.getAttr(fetcher._href).startsWith('javascript')) {
+                        if (frgmnt.hasAttr(fetcher._href) && frgmnt.getAttr(fetcher._href).startsWith('javascript')) {
                             eval(frgmnt.getAttr(fetcher._href))
                             return undefined
                         }
-                        if (frgmnt.hA('_href') && frgmnt.getAttr('_href')) {
+                        if (frgmnt.hasAttr('_href') && frgmnt.getAttr('_href')) {
                             return frgmnt.getAttr('_href') + '?' + params;
                         }
                         return frgmnt.getAttr(this._href) + '?' + params;
-                    } else if (frgmnt.nodeName === 'FORM' && frgmnt.hA(fetcher._action)) {
+                    } else if (frgmnt.nodeName === 'FORM' && frgmnt.hasAttr(fetcher._action)) {
                         return frgmnt.getAttr(fetcher._action)
                     }
                 }
@@ -87,7 +90,7 @@ window.frgmt = (function () {
                 }
                 window.setHID=(frgmnt)=>{
                     if('hasAttribute' in frgmnt){
-                        if (!frgmnt.hA(state._uid)) {
+                        if (!frgmnt.hasAttr(state._uid)) {
                             frgmnt.setAttribute(state._uid,iAPI.uid())
                         }
                     }

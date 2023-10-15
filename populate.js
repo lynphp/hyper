@@ -1,5 +1,5 @@
 window.populate=(()=> {
-    var config = {
+    const config = {
         name: 'populate',
     }
     return  {
@@ -54,7 +54,6 @@ window.populate=(()=> {
                 frgmnt.replaceWith(html);
             }
             doc = new DOMParser().parseFromString(html, 'text/html')
-            console.log(doc.querySelectorAll(frgmt.selector))
             doc.querySelectorAll(frgmt.selector).forEach((frgmnt) => {
                 if (document.getElementById(frgmnt.id) !== undefined) {
                     frgmt.handle(document.getElementById(frgmnt.id));
