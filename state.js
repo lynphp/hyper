@@ -3,4 +3,7 @@ window.state={
     _selector:'state-var',
     init:()=>{
     },
+    getName:()=>{
+        return state.name;
+    }
 }

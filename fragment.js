@@ -4,14 +4,12 @@
  * visibility-fetch="GET:/url"
  * visibility-fetch="GET:/url"
  */
-
-
 window.env='dev'
 const f = {
     scripts:[],
     directive:'',
     selector :'',
-    basePath:'',
+    _basePath:'',
     _trigger:'fragment-trigger',
     _triggers:[],
     pendingScripts:0,
@@ -24,7 +22,9 @@ const f = {
         publish: (topic, frgmnt) => {
             if (f.events.topics[topic]===undefined) return;
             f.events.topics[topic]?.forEach((cbck) => {
-                cbck(frgmnt)
+                if(cbck!==undefined){
+                    cbck(frgmnt)
+                }
             });
          },
          subscribe: (topic, callback, name='a library') => {
@@ -122,58 +122,17 @@ const f = {
             }
         }else{
             if(f.scripts[mdl]!==undefined){
-                //console.warn('already load ' + mdl)
             }else{
                 console.error('cant load ' + mdl +'.js')
             }
             return false;
         }
     },
-    initGlobal:()=>{
-        window.getURL=(frgmnt,attr='')=> {
-            let params = getDataAttribute(frgmnt)
-            if (frgmnt.hasAttribute(attr)) {
-                return frgmnt.getAttribute(attr).split(":")[1] + '?' + params
-            } else if (frgmnt.nodeName === 'A') {
-                if (frgmnt.hasAttribute(fetcher._href) && frgmnt.getAttribute(fetcher._href).startsWith('javascript')) {
-                    eval(frgmnt.getAttribute(fetcher._href))
-                    return undefined
-                }
-                if (frgmnt.hasAttribute('_href') && frgmnt.getAttribute('_href')) {
-                    return frgmnt.getAttribute('_href') + '?' + params;
-                }
-                return frgmnt.getAttribute(this._href) + '?' + params;
-            } else if (frgmnt.nodeName === 'FORM' && frgmnt.hasAttribute(fetcher._action)) {
-                return frgmnt.getAttribute(fetcher._action)
-            }
-        }
-        window.getMethod=(frgmnt, attr)=>{
-            return frgmnt.getAttribute(attr).split(":")[0]
-        },
-        window.getDataAttribute=(element)=> {
-            let queryParams = {}
-            Object.getOwnPropertyNames(element.dataset).forEach((prop) => {
-                if (element.dataset[prop].startsWith("bind")) {
-                    queryParams[prop] = document.querySelector(element.dataset[prop].split(':')[1])?.value
-                } else {
-                    queryParams[prop] = element.dataset[prop]
-                }
-            });
-            return (new URLSearchParams(queryParams)).toString()
-        }
-        window.setHID=(frgmnt)=>{
-            if('hasAttribute' in frgmnt){
-                if (!frgmnt.hasAttribute(f._uid)) {
-                    frgmnt.setAttribute(f._uid,f.uid())
-                }
-            }
-        }
-    },
     start:(drctv='fragment',basePath="/assets/")=>{
-        f.initGlobal()
+        //f.initGlobal()
         f.directive=drctv
         f.selector='*['+f.directive +']'
-        f.basePath=basePath
+        f._basePath=basePath
         document.querySelectorAll(f.selector).forEach((frgmnt)=> {
             f.loadScripts(frgmnt)
         });
@@ -196,7 +155,7 @@ document.onreadystatechange=(e)=>{
     //fragment.start()
 }
 document.addEventListener('ready',()=>{
-    while(f.scripts.length!==f.readyScripts){
+    while(f.scripts.length !== f.readyScripts){
         setTimeout({},10)
     }
     fragment.initElements()

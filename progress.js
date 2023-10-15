@@ -3,8 +3,8 @@ window.progress={
     _progressText:'progress-text',
     elemOrigInnerText:[],
     init:()=>{
-        fragment.events.subscribe(fragment.events.ajax_start,progress.startProgress)
-        fragment.events.subscribe(fragment.events.ajax_end,progress.endProgress)
+        frgmt.events.subscribe(frgmt.events.ajax_start,progress.startProgress)
+        frgmt.events.subscribe(frgmt.events.ajax_end,progress.endProgress)
     },
     startProgress:(frgmnt)=>{
         if(frgmnt.nodeName === 'BUTTON'){
