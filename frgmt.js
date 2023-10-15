@@ -199,6 +199,7 @@ window.frgmt = (function () {
             },
             events: {
                 publish: (topic, frgmnt) => {
+                    console.debug('topic:',topic)
                     if (state.topics[topic]===undefined) return;
                     state.topics[topic]?.forEach((cbck) => {
                         if(cbck!==undefined) {
