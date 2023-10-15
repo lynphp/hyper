@@ -2,16 +2,18 @@ window.populate=(()=> {
     const config = {
         name: 'populate',
     }
+    const state ={
+        initCompleted:false
+    }
     return  {
         init: () => {
+            if(state.initCompleted){
+                return
+            }
+            state.initCompleted=true;
         },
         getName:()=>{
             return config.name;
-        },
-        isHTML: (content) => {
-            let elem = document.createElement('div');
-            elem.innerHTML = content;
-            return elem.children.length > 0;
         },
         /**
          * xxx-<populate mode> = "<selector target>"
@@ -38,7 +40,7 @@ window.populate=(()=> {
             })
             html = doc.body.innerHTML
             if (mode === 'fill') {
-                if (populate.isHTML(html)) {
+                if (frgmt.isHTML(html)) {
                     frgmnt.innerHTML = html;
                 } else {
                     frgmnt.innerText = html;
@@ -49,9 +51,13 @@ window.populate=(()=> {
                 frgmnt.parent.append(html)
             } else if (mode === 'prepend') {
                 frgmnt.parent.prepend(html)
-            } else if (mode === 'auto') {
             } else {
-                frgmnt.replaceWith(html);
+                doc = new DOMParser().parseFromString(html, 'text/html')
+                doc.querySelectorAll('*[id]').forEach((frgmnt) => {
+                    if (document.getElementById(frgmnt.id) !== undefined) {
+                        frgmt.populate(document.getElementById(frgmnt.id),'fill',frgmnt.innerHTML);
+                    }
+                })
             }
             doc = new DOMParser().parseFromString(html, 'text/html')
             doc.querySelectorAll(frgmt.selector).forEach((frgmnt) => {
@@ -59,7 +65,6 @@ window.populate=(()=> {
                     frgmt.handle(document.getElementById(frgmnt.id));
                 }
             })
-
             console.log('populated ' + frgmnt.id);
         }
     }
