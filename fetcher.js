@@ -47,11 +47,6 @@ window.fetcher=(()=>{
                 })
             }
         },
-        isHTML: (content) => {
-            let elem = document.createElement('div');
-            elem.innerHTML = content;
-            return elem.children.length > 0;
-        },
         populate: (content, frgmnt) => {
             let doc = new DOMParser().parseFromString(content, 'text/html')
             doc.querySelectorAll('*[' + fetcher._fetch + ']').forEach((elem) => {
@@ -72,7 +67,7 @@ window.fetcher=(()=>{
                     if (elem !== undefined) {
                         if (doc.body.getElementById(frgmnt.id) !== undefined) {
                             frgmnt.replaceWith(doc.body.getElementById(frgmnt.id))
-                        } else if (this.isHTML(content)) {
+                        } else if (frgmt.isHTML(content)) {
                             elem.innerHTML = doc.body.innerHTML
                         } else {
                             frgmnt.replaceWith(content)
