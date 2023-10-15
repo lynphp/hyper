@@ -180,6 +180,11 @@ window.frgmt = (function () {
                 }
                 return await getAndWait(request)
             },
+            isHTML: (content) => {
+                let elem = document.createElement('div');
+                elem.innerHTML = content;
+                return elem.children.length > 0;
+            },
             /**
              *
              * @param func
