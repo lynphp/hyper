@@ -141,16 +141,16 @@ window.frgmt = (function () {
                 return true
             },
             tryRun:(fn)=>{
-                state[fn.name]=fn
-                state[fn.name].init()
-                if('init' in state[fn.name]){
-                    state[fn.name].init()
+                state[fn.getName()]=fn
+                state[fn.getName()].init()
+                if('init' in state[fn.getName()]){
+                    state[fn.getName()].init()
                     state.readyScripts++;
                     if(state.pendingScripts===state.readyScripts){
                         iAPI.initElements()
                     }
                 }else{
-                    alert(fn.name + '.init() method is undefined.')
+                    alert(fn.getName() + '.init() method is undefined.')
                 }
             },
             registerTriggerHandler:(trigger, callback)=>{

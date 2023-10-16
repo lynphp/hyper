@@ -1,5 +1,12 @@
-<HelloWorld >
+<HelloWorld fragment="webcom">
+    <script>
+        const HelloWorld = {
+            clickMe : () => {
+                alert('clicked')
+            }
+        };
+    </script>
     <div>
-        <p>Hello @data.world</p>
+        <button onclick="HelloWorld.clickMe()">Click Me</button>
     </div>
 </HelloWorld>
