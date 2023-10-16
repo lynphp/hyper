@@ -96,21 +96,20 @@ window.frgmt = (function () {
                     }
                 });
             },
-            loadDependency:(mdl, dependent=null)=>{
+            loadDependency:async (mdl, dependent=null)=>{
                 if(mdl!=="" && state.scripts[mdl]===undefined && window.jslib!== undefined && window.jslib[mdl]!==undefined){
                     state.pendingScripts++;
                     state.scripts[mdl]=true;
-                    let scrt = document.createElement('script');
-                    scrt.src = window.jslib[mdl];
-                    document.head.appendChild(scrt);
-                    scrt.onload=()=>{
-                        console.log(mdl+' loaded')
-                        if(dependent!==null){
-                            dependent['dependencyAdded'](window[mdl])
-                        }
-                        xAPI.tryRun(window[mdl])
-                        return true;
-                    }
+                    return import(window.jslib[mdl]).then(()=>{
+                        //let scrt = document.createElement('script');
+                        //scrt.src = window.jslib[mdl];
+                        //document.head.appendChild(scrt);
+                            if(dependent!==null){
+                                dependent['dependencyAdded'](window[mdl])
+                            }
+                            xAPI.tryRun(window[mdl])
+                            return true;
+                    })
                 }else{
                     if(state.scripts[mdl]!==undefined){
                     }else{

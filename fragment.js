@@ -21,7 +21,7 @@ const f = {
         topics : [],
         publish: (topic, frgmnt) => {
             if (f.events.topics[topic]===undefined) return;
-            f.events.topics[topic]?.forEach((cbck) => {
+            f.events.topics[topic]?.forEach(async (cbck) => {
                 if(cbck!==undefined){
                     cbck(frgmnt)
                 }
@@ -41,7 +41,6 @@ const f = {
         },
         ajax_start:'ajax_start',
         ajax_end:'ajax_end',
-        init_yours:'init_yours',
     },
     uid :  ()=> {
         return f._uid + (++f._lastId)

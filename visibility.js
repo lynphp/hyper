@@ -7,8 +7,8 @@
  * visibility-fill=".className"
  * visibility-replace=".className"
  */
-window.visibility =(()=> {
-    var config = {
+window.visibility = (()=> {
+    let config = {
         name: 'visibility',
         _attrFill: 'visible-fill',
         _attrReplace: 'visible-replace',
@@ -23,12 +23,12 @@ window.visibility =(()=> {
             not_visible: 'not-visible'
         },
     }
-    var state={
+    let state={
         _elementStates: [],
         _elements: [],
         _elementsState: [],
     }
-    const internalAPI=(()=> {
+    let internalAPI=(()=> {
         return {
             populate: null,
             checkElement: (frgmnt) => {
@@ -51,7 +51,7 @@ window.visibility =(()=> {
                         frgmt.events.subscribe(frgmnt.id + '.not-visible', internalAPI.handleNotVisible)
                     }
                 })
-                if (frgmnt.hasAttribute(config._attrFetch)) {
+                if (frgmnt.hasAttr(config._attrFetch)) {
                     await frgmt.registerDependency('fetcher', visibility);
                 }
                 if (internalAPI.getPopulateMode(frgmnt) !== '') {
@@ -166,6 +166,9 @@ window.visibility =(()=> {
         })();
 
         return {
+            getName:()=>{
+              return config.name;
+            },
             init: async () => {
                 //fragment.events.registerTopic('visibility_changed');
                 //fragment-trigger="visible"
@@ -184,7 +187,5 @@ window.visibility =(()=> {
                     internalAPI.fetch = dependency.fetch;
                 }
             },
-
         }
-
 })()

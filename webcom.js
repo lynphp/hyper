@@ -1,3 +1,29 @@
+window.component=(cb)=>{
+    let obj ={};
+    for (let prop in cb) {
+        if( typeof cb[prop] === 'function'){
+            obj[cb[prop].name] = ((fn) => {
+                 function callMe(...params){
+                     fn.apply(this, params);
+                     console.log(params)
+                }
+                return callMe
+            })(cb[cb[prop].name])
+        }else{
+            var val=cb[prop]
+            //obj[cb[prop]]=prop
+            Object.defineProperty(obj, prop, {
+                get() {
+                    return val
+                },
+                set(value) {
+                    val=value
+                }
+            });
+        }
+    }
+    return obj
+}
 window.webcom={
     name:'webcom',
     _prepareSelectors:['webcom-fetch'],
@@ -37,10 +63,11 @@ window.webcom={
             webcom.execute(frgmnt,selector);
         })
     },
-    create:(htmlStr)=> {
-        var frag = document.createDocumentFragment(),
-            temp = document.createElement('div');
+    createFragment:(componentId,htmlStr)=> {
+        let frag = document.createDocumentFragment()
+        let temp = document.createElement('div');
         temp.innerHTML = htmlStr;
+        frag.id = componentId;
         while (temp.firstChild) {
             frag.appendChild(temp.firstChild);
         }
@@ -49,17 +76,18 @@ window.webcom={
     createScript:(name,scriptContent)=>{
         const id = webcom.getNewScriptId();
         var newScript = document.createElement("script");
-        scriptContent=scriptContent.replaceAll(name, name+id)
+        scriptContent=scriptContent.replaceAll(name, name+'_'+id)
+        scriptContent=scriptContent+`\n//# sourceURL=${name}_${id}.js`
         var inlineScript = document.createTextNode(scriptContent);
         newScript.appendChild(inlineScript);
         document.head.appendChild(newScript);
-        return name+id;
+        return name+'_'+id;
     },
     execute: (frgmnt, selector)=>{
         if(selector==='webcom-fetch'){
             return webcom.fetch(frgmnt,selector).then((result)=>{
-                let doc = new DOMParser().parseFromString(result, 'text/html').body.children[0]
-                let name = result.substring(1,result.indexOf(" "))
+                let doc = new DOMParser().parseFromString(result.trim(), 'text/html').body.children[0]
+                let name = result.trim().substring(1,result.trim().indexOf(" "))
                 webcom._components[name]=doc;
                 webcom._components[name].querySelectorAll('script').forEach((script)=>{
                     if(webcom._componentsScripts[name]===undefined){
@@ -68,11 +96,10 @@ window.webcom={
                     webcom._componentsScripts[name][webcom._componentsScripts[name].length]=script
                     webcom._components[name].removeChild(script)
 
-                    let id = webcom.createScript(name,script.innerHTML);
-                    webcom._components[name].innerHTML=webcom._components[name].innerHTML.replaceAll(name+".", id+".")
-                    frgmnt.appendChild(webcom.create(webcom._components[name].innerHTML));
+                    let componentId = webcom.createScript(name,script.innerHTML);
+                    webcom._components[name].innerHTML=webcom._components[name].innerHTML.replaceAll(name+".", componentId+".")
+                    frgmnt.appendChild(webcom.createFragment(componentId,webcom._components[name].innerHTML));
                 })
-               console.log(doc);
             })
         }
     }

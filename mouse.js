@@ -4,6 +4,9 @@ window.mouse={
     _attrRightClickToggle:'mouse-right-click-toggle',
     _elementsState: [],
     _debouncedMouseClick:null,
+    getName:()=>{
+        return mouse.name
+    },
     init:()=>{
         frgmt.registerTriggerHandler('mouse-left-click',mouse.handle);
         //fragment-trigger="not-visible"

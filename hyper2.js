@@ -32,25 +32,25 @@ window.hyper = ((directive='hyper')=>{
     }(0);
     function setHID(element){
         let hid = ''
-        if (!element.hasAttribute(_id)) {
+        if (!element.hasAttr(_id)) {
             hid = uid();
-            element.setAttribute(_id,hid)
+            element.hasAttr(_id,hid)
         }
         return hid;
     }
     function getURL(element){
         let params= getDataAttribute(element)
-        if(element.hasAttribute(_fetch)){
+        if(element.hasAttr(_fetch)){
             return element.getAttribute(_fetch).split(":")[1]+'?'+params
         }else if(element.nodeName === 'A'){
-            if(element.hasAttribute(_href) && element.getAttribute(_href).startsWith('javascript')){
+            if(element.hasAttr(_href) && element.getAttribute(_href).startsWith('javascript')){
                 eval(element.getAttribute(_href))
                 return  undefined
-            }if(element.hasAttribute('_href') && element.getAttribute('_href')){
+            }if(element.hasAttr('_href') && element.getAttribute('_href')){
                 return element.getAttribute('_href')+'?'+params;
             }
             return element.getAttribute(_href)+'?'+params;
-        }else if(element.nodeName==='FORM' && element.hasAttribute(_action)){
+        }else if(element.nodeName==='FORM' && element.hasAttr(_action)){
             return element.getAttribute(_action)
         }
     }
@@ -69,7 +69,7 @@ window.hyper = ((directive='hyper')=>{
         let url = getURL(element)
         if(url !== undefined) {
 
-            if (element.hasAttribute(_static) && pages[url] !== undefined) {
+            if (element.hasAttr(_static) && pages[url] !== undefined) {
                 return pages[url];
             }
             function getAndWait(url) {
@@ -87,7 +87,7 @@ window.hyper = ((directive='hyper')=>{
                 });
             }
             let response = getAndWait(url)
-            if (element.hasAttribute(_static) && pages[url] === undefined) {
+            if (element.hasAttr(_static) && pages[url] === undefined) {
                 pages[url] = response;
             }
             return response;
@@ -98,7 +98,7 @@ window.hyper = ((directive='hyper')=>{
     function post(element){
         let url = getURL(element)
         if(url !== undefined) {
-            if (element.hasAttribute(_static) && pages[url] !== undefined) {
+            if (element.hasAttr(_static) && pages[url] !== undefined) {
                 return pages[url]
             }
             function postAndWait(data) {
@@ -114,7 +114,7 @@ window.hyper = ((directive='hyper')=>{
                 });
             }
             let response= postAndWait()
-            if (element.hasAttribute(_static) && pages[url] === undefined) {
+            if (element.hasAttr(_static) && pages[url] === undefined) {
                 pages[url] = response;
             }
             return response;
@@ -185,10 +185,10 @@ window.hyper = ((directive='hyper')=>{
      * @param element String
      */
     function populate(content, element){
-        if(element.hasAttribute(_extract)){
+        if(element.hasAttr(_extract)){
             let dom= new DOMParser().parseFromString(content, _contentType)
             content = dom.querySelector(element.getAttribute(_extract)).innerHTML
-        } else if (element.hasAttribute(_spread)){
+        } else if (element.hasAttr(_spread)){
             //spread="#content-element-id:fill=#target-element|n..."
             let dom= new DOMParser().parseFromString(content, _contentType)
             let targets = element.getAttribute(_spread).split('|')
@@ -200,14 +200,14 @@ window.hyper = ((directive='hyper')=>{
                 populate(resContent, tmpElem)
             })
             return
-        } else if (element.hasAttribute(_htmln)) {
+        } else if (element.hasAttr(_htmln)) {
             let dom= new DOMParser().parseFromString(content, _contentType)
             dom.querySelector('*[id]').forEach((elm)=>{
                 let elem = document.getElementById(elm.id)
                 if(isHTML(elem.innerHTML)) {
-                    elem.innerHTML = elem.innerHTML
+                    elem.innerHTML = elm.innerHTML
                 }else{
-                    elem.innerText = elem.innerText
+                    elem.innerText = elm.innerText
                 }
             })
         }
