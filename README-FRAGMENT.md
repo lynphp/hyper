@@ -27,11 +27,10 @@ will request another module called ```populate``` to handle the response from th
      fragment-trigger="visible|left-click|right-click"
      visible-fetch="GET:/demos/visibility/random-content"
      visible-fill="self"
-     mouse-left-click-toggle="#elementModal:style.display=true|delete"
-     mouse-right-click-set="varchar:selection=1"
-     mouse-right-click-toggle="#elementMenu:style.display=true"
+     mouse-left-click-toggle="#elementModal.style.display=block|none"
+     mouse-right-click-set="varchar:selection=abc123"
+     mouse-right-click-toggle="#elementMenu.style.display=block/none"
 >    
 </div>
-<div hyper static="true" fetch="GET:/signin/signin-form" on="load"></div>
 ```
 </div>
