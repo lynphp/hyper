@@ -10,16 +10,17 @@ window.component=(cb)=>{
                 return callMe
             })(cb[cb[prop].name])
         }else{
-            var val=cb[prop]
+            obj['__$'+prop]=cb[prop]
             //obj[cb[prop]]=prop
             Object.defineProperty(obj, prop, {
                 get() {
-                    return val
+                    return obj['__$'+prop]
                 },
                 set(value) {
-                    val=value
+                    obj['__$'+prop]=value
                 }
             });
+
         }
     }
     return obj

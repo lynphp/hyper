@@ -35,15 +35,15 @@ window.populate=(()=> {
          */
         populate: (frgmnt, mode, html) => {
             let doc = new DOMParser().parseFromString(html, 'text/html')
-            doc.querySelectorAll(frgmt.selector).forEach((frgmnt) => {
-                setHID(frgmnt)
+            doc.querySelectorAll(fragment.selector).forEach((elem) => {
+                setHID(elem)
             })
             html = doc.body.innerHTML
             if (mode === 'fill') {
-                if (frgmt.isHTML(html)) {
+                if (fragment.isHTML(html)) {
                     frgmnt.innerHTML = html;
                 } else {
-                    frgmnt.innerText = html;
+                    frgmnt.innerText = html.innerText;
                 }
             } else if (mode === 'replace') {
                 frgmnt.replaceWith(html);
@@ -55,14 +55,14 @@ window.populate=(()=> {
                 doc = new DOMParser().parseFromString(html, 'text/html')
                 doc.querySelectorAll('*[id]').forEach((frgmnt) => {
                     if (document.getElementById(frgmnt.id) !== undefined) {
-                        frgmt.populate(document.getElementById(frgmnt.id),'fill',frgmnt.innerHTML);
+                        fragment.populate(document.getElementById(frgmnt.id),'fill',frgmnt.innerHTML);
                     }
                 })
             }
             doc = new DOMParser().parseFromString(html, 'text/html')
-            doc.querySelectorAll(frgmt.selector).forEach((frgmnt) => {
+            doc.querySelectorAll(fragment.selector).forEach((frgmnt) => {
                 if (document.getElementById(frgmnt.id) !== undefined) {
-                    frgmt.handle(document.getElementById(frgmnt.id));
+                    fragment.handle(document.getElementById(frgmnt.id));
                 }
             })
             console.log('populated ' + frgmnt.id);
